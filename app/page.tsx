@@ -319,7 +319,7 @@ export default function Home() {
   }
 
   return (
-    <main className={dark ? "app dark" : "app"}>
+    <main className={`app${dark ? " dark" : ""}${mobileNavOpen ? " mobile-nav-open" : ""}`}>
       <aside className={mobileNavOpen ? "sidebar mobile-open" : "sidebar"}>
         <div className="sidebar-header">
           <div className="brand">

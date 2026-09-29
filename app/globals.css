@@ -978,6 +978,11 @@ h1 {
     overflow: hidden;
     border-right: 1px solid var(--line);
   }
+  .mobile-nav-open .workspace {
+    filter: blur(4px);
+    pointer-events: none;
+    user-select: none;
+  }
   .sidebar .eyebrow,
   .sidebar-bottom {
     display: none;
