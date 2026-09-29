@@ -663,6 +663,20 @@ h1 {
   padding-top: 17px;
   border-top: 1px solid var(--line);
 }
+.detail-primary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.focus-button {
+  padding: 10px 13px;
+  border: 1px solid var(--yellow);
+  background: transparent;
+  color: var(--ink);
+  font: 10px var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .complete-button {
   padding: 10px 13px;
   border: 1px solid var(--green);
@@ -675,6 +689,71 @@ h1 {
 .complete-button.done {
   background: transparent;
   color: var(--green);
+}
+.focus-overlay {
+  position: fixed;
+  z-index: 9;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: var(--green);
+  color: #f7f7ed;
+}
+.focus-session {
+  width: min(100%, 650px);
+  padding: clamp(35px, 7vw, 80px);
+  border: 1px solid #f7f7ed;
+}
+.focus-session-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.focus-session .section-kicker,
+.focus-session .close-button {
+  color: #dfe8d7;
+}
+.focus-task-label {
+  margin-top: clamp(55px, 10vw, 100px);
+  color: #dfe8d7;
+  font: 11px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.focus-session h2 {
+  max-width: 500px;
+  margin-top: 13px;
+  font: italic 500 clamp(32px, 5vw, 55px) / 1.08 var(--serif);
+  letter-spacing: -0.045em;
+}
+.focus-clock {
+  margin-top: clamp(48px, 8vw, 85px);
+  font: 500 clamp(72px, 15vw, 150px) / 0.8 var(--serif);
+  letter-spacing: -0.08em;
+}
+.focus-clock.complete {
+  color: var(--yellow);
+}
+.focus-copy {
+  max-width: 330px;
+  margin-top: 25px;
+  color: #dfe8d7;
+  font: italic 17px / 1.45 var(--serif);
+}
+.focus-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 43px;
+}
+.focus-actions .complete-button {
+  border-color: #f7f7ed;
+  background: #f7f7ed;
+  color: var(--green);
+}
+.focus-actions .text-button {
+  color: #dfe8d7;
 }
 .remove-confirmation {
   align-items: center;
@@ -938,6 +1017,19 @@ h1 {
   .detail-footer {
     display: grid;
     gap: 20px;
+  }
+  .focus-overlay {
+    padding: 18px;
+  }
+  .focus-session {
+    padding: 34px 27px;
+  }
+  .focus-session-header {
+    align-items: flex-start;
+  }
+  .focus-actions {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .task-management {
     justify-self: start;
