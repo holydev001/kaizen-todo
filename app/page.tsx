@@ -15,6 +15,7 @@ type Task = {
   starred: boolean;
 };
 type Profile = { name: string; avatarUrl?: string };
+type Preferences = { activeView: View; dark: boolean };
 
 const starterTasks: Task[] = [
   {
@@ -99,6 +100,7 @@ export default function Home() {
   useEffect(() => {
     const savedTasks = window.localStorage.getItem("museboard-tasks");
     const savedProfile = window.localStorage.getItem("museboard-profile");
+    const savedPreferences = window.localStorage.getItem("museboard-preferences");
     try {
       if (savedTasks) setTasks(JSON.parse(savedTasks) as Task[]);
       if (savedProfile) {
@@ -108,6 +110,13 @@ export default function Home() {
           setProfileNameDraft(parsedProfile.name);
         }
       } else setOnboardingActive(true);
+      if (savedPreferences) {
+        const parsedPreferences = JSON.parse(savedPreferences) as Preferences;
+        if (["Home", "Planner", "History", "Settings"].includes(parsedPreferences.activeView)) {
+          setActiveView(parsedPreferences.activeView);
+        }
+        if (typeof parsedPreferences.dark === "boolean") setDark(parsedPreferences.dark);
+      }
     } catch {
       window.localStorage.removeItem("museboard-tasks");
       window.localStorage.removeItem("museboard-profile");
@@ -120,6 +129,12 @@ export default function Home() {
   useEffect(() => {
     if (isLoaded) window.localStorage.setItem("museboard-tasks", JSON.stringify(tasks));
   }, [isLoaded, tasks]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const preferences: Preferences = { activeView, dark };
+    window.localStorage.setItem("museboard-preferences", JSON.stringify(preferences));
+  }, [activeView, dark, isLoaded]);
 
   useEffect(() => {
     if (!focusActive || focusSeconds === 0) return;
