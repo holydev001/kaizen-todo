@@ -90,6 +90,7 @@ export default function Home() {
   const [focusTaskId, setFocusTaskId] = useState<number | null>(null);
   const [focusSeconds, setFocusSeconds] = useState(25 * 60);
   const [focusActive, setFocusActive] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [onboardingActive, setOnboardingActive] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -295,7 +296,7 @@ export default function Home() {
 
   return (
     <main className={dark ? "app dark" : "app"}>
-      <aside className="sidebar">
+      <aside className={mobileNavOpen ? "sidebar mobile-open" : "sidebar"}>
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
             ≋
@@ -308,7 +309,10 @@ export default function Home() {
             <button
               className={activeView === view ? "nav-item active" : "nav-item"}
               key={view}
-              onClick={() => setActiveView(view)}
+              onClick={() => {
+                setActiveView(view);
+                setMobileNavOpen(false);
+              }}
               type="button"
             >
               <span>{view}</span>
@@ -334,6 +338,15 @@ export default function Home() {
             <h1>{firstName ? `Good to see you, ${firstName}.` : "Make room for good ideas."}</h1>
           </div>
           <div className="top-actions">
+            <button
+              className="mobile-menu"
+              onClick={() => setMobileNavOpen((open) => !open)}
+              aria-expanded={mobileNavOpen}
+              aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
+              type="button"
+            >
+              {mobileNavOpen ? "×" : "☰"}
+            </button>
             <button
               className="icon-button"
               onClick={() => setDark((current) => !current)}
@@ -502,16 +515,12 @@ export default function Home() {
             <div className="section-heading">
               <div>
                 <span className="section-kicker">Settings</span>
-                <h2 id="settings-title">Make this space yours</h2>
+                <h2 id="settings-title">Hello, {firstName || "there"}.</h2>
               </div>
             </div>
-            <p className="section-intro">Your profile and tasks belong only to this browser.</p>
             <form className="settings-form" onSubmit={saveProfile}>
               <section className="settings-block">
-                <div>
-                  <span className="section-kicker">Profile</span>
-                  <h3>Your name and picture</h3>
-                </div>
+                <span className="section-kicker">Your profile</span>
                 <div className="profile-editor">
                   <div className="profile-preview" aria-label="Current profile photo">
                     {profile?.avatarUrl ? (
@@ -543,7 +552,6 @@ export default function Home() {
                         Remove photo
                       </button>
                     )}
-                    <p>Image files under 1 MB stay on this device.</p>
                   </div>
                 </div>
                 <label className="settings-label" htmlFor="profile-name">
@@ -563,13 +571,19 @@ export default function Home() {
                   </button>
                 </div>
               </section>
-              <section className="settings-block data-note">
-                <span className="section-kicker">Storage</span>
-                <h3>Private by design</h3>
-                <p>
-                  Museboard does not create an account or send your tasks, notes, name, or photo to
-                  a server.
-                </p>
+              <section className="settings-block theme-setting">
+                <span className="section-kicker">Appearance</span>
+                <div>
+                  <h3>{dark ? "Dark theme" : "Light theme"}</h3>
+                  <p>Choose the atmosphere that helps you focus.</p>
+                </div>
+                <button
+                  className="theme-button"
+                  onClick={() => setDark((current) => !current)}
+                  type="button"
+                >
+                  Switch to {dark ? "light" : "dark"} <span aria-hidden="true">↗</span>
+                </button>
               </section>
             </form>
           </section>
