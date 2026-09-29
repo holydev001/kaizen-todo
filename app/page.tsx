@@ -87,6 +87,9 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileNameDraft, setProfileNameDraft] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
+  const [focusTaskId, setFocusTaskId] = useState<number | null>(null);
+  const [focusSeconds, setFocusSeconds] = useState(25 * 60);
+  const [focusActive, setFocusActive] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [onboardingActive, setOnboardingActive] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -117,6 +120,16 @@ export default function Home() {
     if (isLoaded) window.localStorage.setItem("museboard-tasks", JSON.stringify(tasks));
   }, [isLoaded, tasks]);
 
+  useEffect(() => {
+    if (!focusActive || focusSeconds === 0) return;
+    const timer = window.setInterval(() => setFocusSeconds((seconds) => seconds - 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [focusActive, focusSeconds]);
+
+  useEffect(() => {
+    if (focusSeconds === 0) setFocusActive(false);
+  }, [focusSeconds]);
+
   const filteredTasks = useMemo(
     () =>
       tasks.filter((task) => {
@@ -129,6 +142,7 @@ export default function Home() {
   );
   const todayTasks = filteredTasks.filter((task) => task.category === "Today");
   const selectedTask = tasks.find((task) => task.id === selectedId) ?? null;
+  const focusTask = tasks.find((task) => task.id === focusTaskId) ?? null;
   const completed = tasks.filter((task) => task.done).length;
   const openTasks = tasks.filter((task) => !task.done).length;
   const priorityTasks = tasks.filter((task) => task.starred && !task.done).length;
@@ -229,6 +243,21 @@ export default function Home() {
     window.localStorage.setItem("museboard-profile", JSON.stringify(nextProfile));
     setProfile(nextProfile);
     setProfileMessage("Photo removed.");
+  }
+  function startFocusSession(task: Task) {
+    setFocusTaskId(task.id);
+    setFocusSeconds(25 * 60);
+    setFocusActive(true);
+  }
+  function closeFocusSession() {
+    setFocusTaskId(null);
+    setFocusActive(false);
+    setFocusSeconds(25 * 60);
+  }
+  function formatFocusTime(seconds: number) {
+    const minutes = Math.floor(seconds / 60);
+    const remainder = seconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
   }
 
   function renderTask(task: Task) {
@@ -546,6 +575,54 @@ export default function Home() {
           </section>
         )}
       </section>
+      {focusTask && (
+        <section className="focus-overlay" aria-label="Focus session">
+          <div
+            className="focus-session"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="focus-title"
+          >
+            <div className="focus-session-header">
+              <span className="section-kicker">A quiet 25-minute session</span>
+              <button className="close-button" onClick={closeFocusSession} type="button">
+                End session ×
+              </button>
+            </div>
+            <p className="focus-task-label">Your focus is</p>
+            <h2 id="focus-title">{focusTask.title}</h2>
+            <div
+              className={focusSeconds === 0 ? "focus-clock complete" : "focus-clock"}
+              aria-live="polite"
+            >
+              {focusSeconds === 0 ? "Done" : formatFocusTime(focusSeconds)}
+            </div>
+            <p className="focus-copy">
+              {focusSeconds === 0
+                ? "You held the space. Carry the feeling forward."
+                : "One task. One small stretch of protected attention."}
+            </p>
+            <div className="focus-actions">
+              {focusSeconds === 0 ? (
+                <button className="complete-button" onClick={closeFocusSession} type="button">
+                  Return to task
+                </button>
+              ) : (
+                <button
+                  className="complete-button"
+                  onClick={() => setFocusActive((active) => !active)}
+                  type="button"
+                >
+                  {focusActive ? "Pause session" : "Resume session"}
+                </button>
+              )}
+              <button className="text-button" onClick={closeFocusSession} type="button">
+                End early
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
       {selectedTask && (
         <section className="detail-overlay" aria-label="Task detail">
           <div
@@ -634,13 +711,22 @@ export default function Home() {
               value={selectedTask.notes}
             />
             <div className="detail-footer">
-              <button
-                className={selectedTask.done ? "complete-button done" : "complete-button"}
-                onClick={() => updateTask(selectedTask.id, { done: !selectedTask.done })}
-                type="button"
-              >
-                {selectedTask.done ? "Marked complete" : "Mark complete"}
-              </button>
+              <div className="detail-primary-actions">
+                <button
+                  className="focus-button"
+                  onClick={() => startFocusSession(selectedTask)}
+                  type="button"
+                >
+                  Focus for 25 min
+                </button>
+                <button
+                  className={selectedTask.done ? "complete-button done" : "complete-button"}
+                  onClick={() => updateTask(selectedTask.id, { done: !selectedTask.done })}
+                  type="button"
+                >
+                  {selectedTask.done ? "Marked complete" : "Mark complete"}
+                </button>
+              </div>
               <div className="task-management" aria-live="polite">
                 {confirmingDeleteId === selectedTask.id ? (
                   <div className="remove-confirmation">
