@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, Check, Menu, Moon, Sun, Waves, X } from "lucide-react";
 
 type TaskCategory = "Today" | "This week" | "Someday";
 type Filter = "all" | "priority" | "open" | "done";
@@ -15,6 +16,7 @@ type Task = {
   starred: boolean;
 };
 type Profile = { name: string; avatarUrl?: string };
+type Preferences = { activeView: View; dark: boolean };
 
 const starterTasks: Task[] = [
   {
@@ -90,6 +92,7 @@ export default function Home() {
   const [focusTaskId, setFocusTaskId] = useState<number | null>(null);
   const [focusSeconds, setFocusSeconds] = useState(25 * 60);
   const [focusActive, setFocusActive] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [onboardingActive, setOnboardingActive] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -98,6 +101,7 @@ export default function Home() {
   useEffect(() => {
     const savedTasks = window.localStorage.getItem("museboard-tasks");
     const savedProfile = window.localStorage.getItem("museboard-profile");
+    const savedPreferences = window.localStorage.getItem("museboard-preferences");
     try {
       if (savedTasks) setTasks(JSON.parse(savedTasks) as Task[]);
       if (savedProfile) {
@@ -107,6 +111,13 @@ export default function Home() {
           setProfileNameDraft(parsedProfile.name);
         }
       } else setOnboardingActive(true);
+      if (savedPreferences) {
+        const parsedPreferences = JSON.parse(savedPreferences) as Preferences;
+        if (["Home", "Planner", "History", "Settings"].includes(parsedPreferences.activeView)) {
+          setActiveView(parsedPreferences.activeView);
+        }
+        if (typeof parsedPreferences.dark === "boolean") setDark(parsedPreferences.dark);
+      }
     } catch {
       window.localStorage.removeItem("museboard-tasks");
       window.localStorage.removeItem("museboard-profile");
@@ -121,6 +132,12 @@ export default function Home() {
   }, [isLoaded, tasks]);
 
   useEffect(() => {
+    if (!isLoaded) return;
+    const preferences: Preferences = { activeView, dark };
+    window.localStorage.setItem("museboard-preferences", JSON.stringify(preferences));
+  }, [activeView, dark, isLoaded]);
+
+  useEffect(() => {
     if (!focusActive || focusSeconds === 0) return;
     const timer = window.setInterval(() => setFocusSeconds((seconds) => seconds - 1), 1000);
     return () => window.clearInterval(timer);
@@ -129,6 +146,15 @@ export default function Home() {
   useEffect(() => {
     if (focusSeconds === 0) setFocusActive(false);
   }, [focusSeconds]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileNavOpen]);
 
   const filteredTasks = useMemo(
     () =>
@@ -269,7 +295,7 @@ export default function Home() {
           aria-label={task.done ? `Mark ${task.title} incomplete` : `Mark ${task.title} complete`}
           type="button"
         >
-          {task.done ? "✓" : ""}
+          {task.done && <Check aria-hidden="true" size={13} strokeWidth={3} />}
         </button>
         <div className="task-copy">
           <h3>{task.title}</h3>
@@ -279,7 +305,7 @@ export default function Home() {
           </div>
         </div>
         <button className="detail-button" onClick={() => openTask(task)} type="button">
-          Open <span aria-hidden="true">↗</span>
+          Open <ArrowUpRight aria-hidden="true" size={13} />
         </button>
       </article>
     );
@@ -287,20 +313,25 @@ export default function Home() {
   function renderEmpty(message: string) {
     return (
       <div className="empty-state">
-        <span>⌁</span>
+        <Waves aria-hidden="true" size={28} />
         <p>{message}</p>
       </div>
     );
   }
 
   return (
-    <main className={dark ? "app dark" : "app"}>
-      <aside className="sidebar">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            ≋
-          </span>
-          <span>MUSEBOARD</span>
+    <main className={`app${dark ? " dark" : ""}${mobileNavOpen ? " mobile-nav-open" : ""}`}>
+      <aside className={mobileNavOpen ? "sidebar mobile-open" : "sidebar"}>
+        <div className="sidebar-header">
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true">
+              ≋
+            </span>
+            <span>MUSEBOARD</span>
+          </div>
+          <button className="menu-cancel" onClick={() => setMobileNavOpen(false)} type="button">
+            Cancel
+          </button>
         </div>
         <p className="eyebrow">A creative task space</p>
         <nav className="nav-list" aria-label="Workspace sections">
@@ -308,7 +339,10 @@ export default function Home() {
             <button
               className={activeView === view ? "nav-item active" : "nav-item"}
               key={view}
-              onClick={() => setActiveView(view)}
+              onClick={() => {
+                setActiveView(view);
+                setMobileNavOpen(false);
+              }}
               type="button"
             >
               <span>{view}</span>
@@ -335,12 +369,25 @@ export default function Home() {
           </div>
           <div className="top-actions">
             <button
+              className="mobile-menu"
+              onClick={() => setMobileNavOpen((open) => !open)}
+              aria-expanded={mobileNavOpen}
+              aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
+              type="button"
+            >
+              {mobileNavOpen ? (
+                <X aria-hidden="true" size={19} />
+              ) : (
+                <Menu aria-hidden="true" size={19} />
+              )}
+            </button>
+            <button
               className="icon-button"
               onClick={() => setDark((current) => !current)}
               aria-label="Toggle theme"
               type="button"
             >
-              {dark ? "☼" : "☾"}
+              {dark ? <Sun aria-hidden="true" size={17} /> : <Moon aria-hidden="true" size={17} />}
             </button>
             <button
               className="avatar avatar-button"
@@ -359,45 +406,51 @@ export default function Home() {
             </button>
           </div>
         </header>
-        <form className="capture-form" onSubmit={addTask}>
-          <label className="sr-only" htmlFor="new-task">
-            Add a new task
-          </label>
-          <input
-            id="new-task"
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Capture something you want to make happen…"
-            value={draft}
-          />
-          <label className="sr-only" htmlFor="task-timeframe">
-            Task timeframe
-          </label>
-          <select
-            id="task-timeframe"
-            onChange={(event) => setDraftCategory(event.target.value as TaskCategory)}
-            value={draftCategory}
-          >
-            {categories.map((category) => (
-              <option key={category}>{category}</option>
-            ))}
-          </select>
-          <button type="submit">
-            Add task <span aria-hidden="true">↗</span>
-          </button>
-        </form>
-        <div className="filter-bar" aria-label="Filter tasks">
-          <span className="filter-label">Show</span>
-          {filters.map((filter) => (
-            <button
-              className={activeFilter === filter.value ? "filter-button active" : "filter-button"}
-              key={filter.value}
-              onClick={() => setActiveFilter(filter.value)}
-              type="button"
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        {activeView !== "Settings" && (
+          <>
+            <form className="capture-form" onSubmit={addTask}>
+              <label className="sr-only" htmlFor="new-task">
+                Add a new task
+              </label>
+              <input
+                id="new-task"
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Capture something you want to make happen…"
+                value={draft}
+              />
+              <label className="sr-only" htmlFor="task-timeframe">
+                Task timeframe
+              </label>
+              <select
+                id="task-timeframe"
+                onChange={(event) => setDraftCategory(event.target.value as TaskCategory)}
+                value={draftCategory}
+              >
+                {categories.map((category) => (
+                  <option key={category}>{category}</option>
+                ))}
+              </select>
+              <button type="submit">
+                Add task <ArrowUpRight aria-hidden="true" size={15} />
+              </button>
+            </form>
+            <div className="filter-bar" aria-label="Filter tasks">
+              <span className="filter-label">Show</span>
+              {filters.map((filter) => (
+                <button
+                  className={
+                    activeFilter === filter.value ? "filter-button active" : "filter-button"
+                  }
+                  key={filter.value}
+                  onClick={() => setActiveFilter(filter.value)}
+                  type="button"
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
         {activeView === "Home" && (
           <>
             <section className="summary-grid" aria-label="Today at a glance">
@@ -489,7 +542,7 @@ export default function Home() {
                     </div>
                     <p>{doneCount} complete</p>
                     <button onClick={() => setActiveView("Planner")} type="button">
-                      View list <span aria-hidden="true">↗</span>
+                      View list <ArrowUpRight aria-hidden="true" size={13} />
                     </button>
                   </section>
                 );
@@ -502,16 +555,12 @@ export default function Home() {
             <div className="section-heading">
               <div>
                 <span className="section-kicker">Settings</span>
-                <h2 id="settings-title">Make this space yours</h2>
+                <h2 id="settings-title">Hello, {firstName || "there"}.</h2>
               </div>
             </div>
-            <p className="section-intro">Your profile and tasks belong only to this browser.</p>
             <form className="settings-form" onSubmit={saveProfile}>
               <section className="settings-block">
-                <div>
-                  <span className="section-kicker">Profile</span>
-                  <h3>Your name and picture</h3>
-                </div>
+                <span className="section-kicker">Your profile</span>
                 <div className="profile-editor">
                   <div className="profile-preview" aria-label="Current profile photo">
                     {profile?.avatarUrl ? (
@@ -543,7 +592,6 @@ export default function Home() {
                         Remove photo
                       </button>
                     )}
-                    <p>Image files under 1 MB stay on this device.</p>
                   </div>
                 </div>
                 <label className="settings-label" htmlFor="profile-name">
@@ -563,13 +611,19 @@ export default function Home() {
                   </button>
                 </div>
               </section>
-              <section className="settings-block data-note">
-                <span className="section-kicker">Storage</span>
-                <h3>Private by design</h3>
-                <p>
-                  Museboard does not create an account or send your tasks, notes, name, or photo to
-                  a server.
-                </p>
+              <section className="settings-block theme-setting">
+                <span className="section-kicker">Appearance</span>
+                <div>
+                  <h3>{dark ? "Dark theme" : "Light theme"}</h3>
+                  <p>Choose the atmosphere that helps you focus.</p>
+                </div>
+                <button
+                  className="theme-button"
+                  onClick={() => setDark((current) => !current)}
+                  type="button"
+                >
+                  Switch to {dark ? "light" : "dark"} <ArrowUpRight aria-hidden="true" size={13} />
+                </button>
               </section>
             </form>
           </section>
@@ -586,7 +640,7 @@ export default function Home() {
             <div className="focus-session-header">
               <span className="section-kicker">A quiet 25-minute session</span>
               <button className="close-button" onClick={closeFocusSession} type="button">
-                End session ×
+                End session <X aria-hidden="true" size={13} />
               </button>
             </div>
             <p className="focus-task-label">Your focus is</p>
@@ -639,7 +693,7 @@ export default function Home() {
                 type="button"
                 aria-label="Close task detail"
               >
-                Close ×
+                Close <X aria-hidden="true" size={13} />
               </button>
             </header>
             {isEditingTitle ? (
@@ -786,7 +840,7 @@ export default function Home() {
                   value={nameDraft}
                 />
                 <button className="onboarding-button" type="submit">
-                  Begin gently <span>↗</span>
+                  Begin gently <ArrowUpRight aria-hidden="true" size={14} />
                 </button>
               </form>
             ) : (
@@ -809,7 +863,8 @@ export default function Home() {
                     Skip tour
                   </button>
                   <button className="onboarding-button" onClick={advanceOnboarding} type="button">
-                    {onboardingStep === tourSteps.length ? "Open my space" : "Next"} <span>↗</span>
+                    {onboardingStep === tourSteps.length ? "Open my space" : "Next"}{" "}
+                    <ArrowUpRight aria-hidden="true" size={14} />
                   </button>
                 </div>
               </div>
