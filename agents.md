@@ -23,6 +23,7 @@ Museboard is a calm, creative-first to-do app. Protect its editorial feel: spaci
 
 - Run `npm run lint`, `npm run format:check`, and `npm run build` before considering work complete.
 - Test adding a task, changing its category through the UI when available, completing it, starring it, editing notes, switching theme, and refreshing the page.
+- Test onboarding from a clean browser cache: save a name, complete or skip the tour, then refresh and confirm the personalized workspace remains visible without reopening the tour.
 - Check keyboard labels and focus behavior for every interactive control.
 
 ## Git workflow
