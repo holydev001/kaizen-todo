@@ -11,6 +11,10 @@ type Task = {
   starred: boolean;
 };
 
+type Profile = {
+  name: string;
+};
+
 const starterTasks: Task[] = [
   {
     id: 1,
@@ -40,6 +44,24 @@ const starterTasks: Task[] = [
 
 const categories: Task["category"][] = ["Today", "This week", "Someday"];
 
+const tourSteps = [
+  {
+    eyebrow: "First, catch the spark",
+    title: "A thought is enough to begin.",
+    copy: "Use the open line in your workspace to catch an idea before it disappears. You can shape it later.",
+  },
+  {
+    eyebrow: "Then, leave yourself a margin",
+    title: "Notes keep the why close.",
+    copy: "Select a task and use its margin for references, half-formed thoughts, or the next small move.",
+  },
+  {
+    eyebrow: "Finally, protect your rhythm",
+    title: "Make the space work your way.",
+    copy: "Your progress, tasks, notes, and name stay in this browser. Switch themes or enter focus mode whenever you need a quieter view.",
+  },
+];
+
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>(starterTasks);
   const [activeCategory, setActiveCategory] = useState<Task["category"]>("Today");
@@ -48,15 +70,37 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState(1);
   const [dark, setDark] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [onboardingActive, setOnboardingActive] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [nameDraft, setNameDraft] = useState("");
 
   useEffect(() => {
     const saved = window.localStorage.getItem("museboard-tasks");
-    if (saved) setTasks(JSON.parse(saved));
+    const savedProfile = window.localStorage.getItem("museboard-profile");
+
+    try {
+      if (saved) setTasks(JSON.parse(saved));
+      if (savedProfile) {
+        const parsedProfile = JSON.parse(savedProfile) as Profile;
+        if (parsedProfile.name) setProfile(parsedProfile);
+      } else {
+        setOnboardingActive(true);
+      }
+    } catch {
+      window.localStorage.removeItem("museboard-tasks");
+      window.localStorage.removeItem("museboard-profile");
+      setOnboardingActive(true);
+    } finally {
+      setIsLoaded(true);
+    }
   }, []);
 
   useEffect(() => {
+    if (!isLoaded) return;
     window.localStorage.setItem("museboard-tasks", JSON.stringify(tasks));
-  }, [tasks]);
+  }, [isLoaded, tasks]);
 
   const visibleTasks = useMemo(
     () => tasks.filter((task) => task.category === activeCategory),
@@ -86,6 +130,29 @@ export default function Home() {
   function updateTask(id: number, patch: Partial<Task>) {
     setTasks((current) => current.map((task) => (task.id === id ? { ...task, ...patch } : task)));
   }
+
+  function startOnboarding(event: React.FormEvent) {
+    event.preventDefault();
+    const name = nameDraft.trim();
+    if (!name) return;
+
+    const nextProfile = { name };
+    window.localStorage.setItem("museboard-profile", JSON.stringify(nextProfile));
+    setProfile(nextProfile);
+    setOnboardingStep(1);
+  }
+
+  function advanceOnboarding() {
+    if (onboardingStep === tourSteps.length) {
+      setOnboardingActive(false);
+      return;
+    }
+    setOnboardingStep((step) => step + 1);
+  }
+
+  const firstName = profile?.name.trim().split(" ")[0] ?? "";
+  const avatarInitial = firstName.slice(0, 1).toUpperCase() || "M";
+  const activeTourStep = tourSteps[onboardingStep - 1];
 
   return (
     <main className={dark ? "app dark" : "app"}>
@@ -125,7 +192,9 @@ export default function Home() {
         <header className="topbar">
           <div>
             <p className="eyebrow">Tuesday, September 29</p>
-            <h1>Make room for good ideas.</h1>
+            <h1>
+              {firstName ? `Make room for good ideas, ${firstName}.` : "Make room for good ideas."}
+            </h1>
           </div>
           <div className="top-actions">
             <button
@@ -142,7 +211,9 @@ export default function Home() {
             >
               {dark ? "☼" : "☾"}
             </button>
-            <div className="avatar">C</div>
+            <div className="avatar" aria-label={`${firstName || "Museboard"} profile`}>
+              {avatarInitial}
+            </div>
           </div>
         </header>
         <div className="content-grid">
@@ -243,6 +314,65 @@ export default function Home() {
           )}
         </div>
       </section>
+      {isLoaded && onboardingActive && (
+        <section className="onboarding" aria-label="Museboard welcome tour">
+          <div className="onboarding-mark">✳</div>
+          <div className="onboarding-grid" aria-hidden="true" />
+          <div
+            className="onboarding-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="onboarding-title"
+          >
+            {onboardingStep === 0 ? (
+              <form className="name-form" onSubmit={startOnboarding}>
+                <p className="section-kicker">Welcome to Museboard</p>
+                <h2 id="onboarding-title">What should we call you?</h2>
+                <p className="onboarding-copy">
+                  This is a small, private corner for your ideas. Your name stays in this browser.
+                </p>
+                <label htmlFor="name">Your name</label>
+                <input
+                  autoFocus
+                  id="name"
+                  maxLength={40}
+                  onChange={(event) => setNameDraft(event.target.value)}
+                  placeholder="e.g. Ada"
+                  value={nameDraft}
+                />
+                <button className="onboarding-button" type="submit">
+                  Begin gently <span>↗</span>
+                </button>
+              </form>
+            ) : (
+              <div className="tour-card">
+                <div className="tour-progress">
+                  <span>{String(onboardingStep).padStart(2, "0")} / 03</span>
+                  <div className="tour-track">
+                    <span style={{ width: `${(onboardingStep / tourSteps.length) * 100}%` }} />
+                  </div>
+                </div>
+                <p className="section-kicker">{activeTourStep.eyebrow}</p>
+                <h2 id="onboarding-title">{activeTourStep.title}</h2>
+                <p className="onboarding-copy">{activeTourStep.copy}</p>
+                <div className="tour-actions">
+                  <button
+                    className="text-button"
+                    onClick={() => setOnboardingActive(false)}
+                    type="button"
+                  >
+                    Skip tour
+                  </button>
+                  <button className="onboarding-button" onClick={advanceOnboarding} type="button">
+                    {onboardingStep === tourSteps.length ? "Open my space" : "Next"} <span>↗</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="onboarding-note">Everything here is saved only on this device.</p>
+        </section>
+      )}
     </main>
   );
 }
