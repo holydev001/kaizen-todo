@@ -70,6 +70,9 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState(1);
   const [dark, setDark] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [onboardingActive, setOnboardingActive] = useState(false);
@@ -129,6 +132,26 @@ export default function Home() {
 
   function updateTask(id: number, patch: Partial<Task>) {
     setTasks((current) => current.map((task) => (task.id === id ? { ...task, ...patch } : task)));
+  }
+
+  function beginTitleEdit(task: Task) {
+    setTitleDraft(task.title);
+    setIsEditingTitle(true);
+  }
+
+  function saveTitle(event: React.FormEvent) {
+    event.preventDefault();
+    if (!selectedTask || !titleDraft.trim()) return;
+    updateTask(selectedTask.id, { title: titleDraft.trim() });
+    setIsEditingTitle(false);
+  }
+
+  function deleteTask(taskId: number) {
+    const nextTasks = tasks.filter((task) => task.id !== taskId);
+    setTasks(nextTasks);
+    setSelectedId(nextTasks[0]?.id ?? 0);
+    setIsEditingTitle(false);
+    setConfirmingDeleteId(null);
   }
 
   function startOnboarding(event: React.FormEvent) {
@@ -292,7 +315,43 @@ export default function Home() {
               </div>
               {selectedTask ? (
                 <>
-                  <h2>{selectedTask.title}</h2>
+                  {isEditingTitle ? (
+                    <form className="title-form" onSubmit={saveTitle}>
+                      <label className="sr-only" htmlFor="task-title">
+                        Task title
+                      </label>
+                      <input
+                        autoFocus
+                        id="task-title"
+                        maxLength={120}
+                        onChange={(event) => setTitleDraft(event.target.value)}
+                        value={titleDraft}
+                      />
+                      <div className="title-form-actions">
+                        <button
+                          className="text-button"
+                          onClick={() => setIsEditingTitle(false)}
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+                        <button className="text-button strong" type="submit">
+                          Save title
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="task-title-row">
+                      <h2>{selectedTask.title}</h2>
+                      <button
+                        className="edit-button"
+                        onClick={() => beginTitleEdit(selectedTask)}
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     value={selectedTask.notes}
                     onChange={(event) => updateTask(selectedTask.id, { notes: event.target.value })}
@@ -301,6 +360,37 @@ export default function Home() {
                   <div className="note-footer">
                     <span>Autosaved locally</span>
                     <span>⌘ ↵</span>
+                  </div>
+                  <div className="task-management" aria-live="polite">
+                    {confirmingDeleteId === selectedTask.id ? (
+                      <>
+                        <p>Remove this task from this device?</p>
+                        <div className="management-actions">
+                          <button
+                            className="text-button"
+                            onClick={() => setConfirmingDeleteId(null)}
+                            type="button"
+                          >
+                            Keep it
+                          </button>
+                          <button
+                            className="text-button danger"
+                            onClick={() => deleteTask(selectedTask.id)}
+                            type="button"
+                          >
+                            Remove task
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <button
+                        className="text-button danger"
+                        onClick={() => setConfirmingDeleteId(selectedTask.id)}
+                        type="button"
+                      >
+                        Remove task
+                      </button>
+                    )}
                   </div>
                 </>
               ) : (

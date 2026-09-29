@@ -289,6 +289,79 @@ h1 {
   margin: 35px 0 22px;
   font: italic 500 27px/1.15 var(--serif);
 }
+.task-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.task-title-row h2 {
+  flex: 1;
+}
+.edit-button {
+  margin-top: 37px;
+  padding: 0 0 3px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--green);
+  font: 10px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.edit-button:hover,
+.edit-button:focus-visible {
+  border-color: currentColor;
+}
+.title-form {
+  margin: 35px 0 22px;
+}
+.title-form input {
+  width: 100%;
+  padding: 0 0 9px;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: italic 500 27px/1.15 var(--serif);
+}
+.title-form-actions,
+.management-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.title-form-actions {
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.text-button.strong {
+  color: var(--green);
+}
+.task-management {
+  margin-top: 30px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+.task-management p {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font: italic 14px var(--serif);
+}
+.text-button.danger {
+  color: #9e433d;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .notes-panel textarea {
   display: block;
   width: 100%;
