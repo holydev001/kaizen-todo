@@ -131,6 +131,15 @@ export default function Home() {
     if (focusSeconds === 0) setFocusActive(false);
   }, [focusSeconds]);
 
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileNavOpen]);
+
   const filteredTasks = useMemo(
     () =>
       tasks.filter((task) => {
@@ -297,11 +306,16 @@ export default function Home() {
   return (
     <main className={dark ? "app dark" : "app"}>
       <aside className={mobileNavOpen ? "sidebar mobile-open" : "sidebar"}>
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            ≋
-          </span>
-          <span>MUSEBOARD</span>
+        <div className="sidebar-header">
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true">
+              ≋
+            </span>
+            <span>MUSEBOARD</span>
+          </div>
+          <button className="menu-cancel" onClick={() => setMobileNavOpen(false)} type="button">
+            Cancel
+          </button>
         </div>
         <p className="eyebrow">A creative task space</p>
         <nav className="nav-list" aria-label="Workspace sections">
@@ -372,45 +386,51 @@ export default function Home() {
             </button>
           </div>
         </header>
-        <form className="capture-form" onSubmit={addTask}>
-          <label className="sr-only" htmlFor="new-task">
-            Add a new task
-          </label>
-          <input
-            id="new-task"
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Capture something you want to make happen…"
-            value={draft}
-          />
-          <label className="sr-only" htmlFor="task-timeframe">
-            Task timeframe
-          </label>
-          <select
-            id="task-timeframe"
-            onChange={(event) => setDraftCategory(event.target.value as TaskCategory)}
-            value={draftCategory}
-          >
-            {categories.map((category) => (
-              <option key={category}>{category}</option>
-            ))}
-          </select>
-          <button type="submit">
-            Add task <span aria-hidden="true">↗</span>
-          </button>
-        </form>
-        <div className="filter-bar" aria-label="Filter tasks">
-          <span className="filter-label">Show</span>
-          {filters.map((filter) => (
-            <button
-              className={activeFilter === filter.value ? "filter-button active" : "filter-button"}
-              key={filter.value}
-              onClick={() => setActiveFilter(filter.value)}
-              type="button"
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        {activeView !== "Settings" && (
+          <>
+            <form className="capture-form" onSubmit={addTask}>
+              <label className="sr-only" htmlFor="new-task">
+                Add a new task
+              </label>
+              <input
+                id="new-task"
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Capture something you want to make happen…"
+                value={draft}
+              />
+              <label className="sr-only" htmlFor="task-timeframe">
+                Task timeframe
+              </label>
+              <select
+                id="task-timeframe"
+                onChange={(event) => setDraftCategory(event.target.value as TaskCategory)}
+                value={draftCategory}
+              >
+                {categories.map((category) => (
+                  <option key={category}>{category}</option>
+                ))}
+              </select>
+              <button type="submit">
+                Add task <span aria-hidden="true">↗</span>
+              </button>
+            </form>
+            <div className="filter-bar" aria-label="Filter tasks">
+              <span className="filter-label">Show</span>
+              {filters.map((filter) => (
+                <button
+                  className={
+                    activeFilter === filter.value ? "filter-button active" : "filter-button"
+                  }
+                  key={filter.value}
+                  onClick={() => setActiveFilter(filter.value)}
+                  type="button"
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
         {activeView === "Home" && (
           <>
             <section className="summary-grid" aria-label="Today at a glance">
