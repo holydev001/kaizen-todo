@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type TaskCategory = "Today" | "This week" | "Someday";
 type Filter = "all" | "priority" | "open" | "done";
-type View = "Home" | "Planner" | "History";
+type View = "Home" | "Planner" | "History" | "Settings";
 
 type Task = {
   id: number;
@@ -14,7 +14,7 @@ type Task = {
   done: boolean;
   starred: boolean;
 };
-type Profile = { name: string };
+type Profile = { name: string; avatarUrl?: string };
 
 const starterTasks: Task[] = [
   {
@@ -85,6 +85,8 @@ export default function Home() {
   const [titleDraft, setTitleDraft] = useState("");
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileNameDraft, setProfileNameDraft] = useState("");
+  const [profileMessage, setProfileMessage] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
   const [onboardingActive, setOnboardingActive] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -97,7 +99,10 @@ export default function Home() {
       if (savedTasks) setTasks(JSON.parse(savedTasks) as Task[]);
       if (savedProfile) {
         const parsedProfile = JSON.parse(savedProfile) as Profile;
-        if (parsedProfile.name) setProfile(parsedProfile);
+        if (parsedProfile.name) {
+          setProfile(parsedProfile);
+          setProfileNameDraft(parsedProfile.name);
+        }
       } else setOnboardingActive(true);
     } catch {
       window.localStorage.removeItem("museboard-tasks");
@@ -179,6 +184,7 @@ export default function Home() {
     const nextProfile = { name };
     window.localStorage.setItem("museboard-profile", JSON.stringify(nextProfile));
     setProfile(nextProfile);
+    setProfileNameDraft(name);
     setOnboardingStep(1);
   }
   function advanceOnboarding() {
@@ -187,6 +193,42 @@ export default function Home() {
       return;
     }
     setOnboardingStep((step) => step + 1);
+  }
+  function saveProfile(event: React.FormEvent) {
+    event.preventDefault();
+    const name = profileNameDraft.trim();
+    if (!name) return;
+    const nextProfile = { ...profile, name };
+    window.localStorage.setItem("museboard-profile", JSON.stringify(nextProfile));
+    setProfile(nextProfile);
+    setProfileMessage("Saved on this device.");
+  }
+  function changeProfilePhoto(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 1_000_000) {
+      setProfileMessage("Choose an image under 1 MB.");
+      event.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const avatarUrl = reader.result;
+      if (typeof avatarUrl !== "string") return;
+      const nextProfile = { ...profile, name: profile?.name ?? "Museboard", avatarUrl };
+      window.localStorage.setItem("museboard-profile", JSON.stringify(nextProfile));
+      setProfile(nextProfile);
+      setProfileMessage("Photo saved on this device.");
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  }
+  function removeProfilePhoto() {
+    if (!profile) return;
+    const nextProfile = { name: profile.name };
+    window.localStorage.setItem("museboard-profile", JSON.stringify(nextProfile));
+    setProfile(nextProfile);
+    setProfileMessage("Photo removed.");
   }
 
   function renderTask(task: Task) {
@@ -233,7 +275,7 @@ export default function Home() {
         </div>
         <p className="eyebrow">A creative task space</p>
         <nav className="nav-list" aria-label="Workspace sections">
-          {(["Home", "Planner", "History"] as View[]).map((view) => (
+          {(["Home", "Planner", "History", "Settings"] as View[]).map((view) => (
             <button
               className={activeView === view ? "nav-item active" : "nav-item"}
               key={view}
@@ -271,9 +313,21 @@ export default function Home() {
             >
               {dark ? "☼" : "☾"}
             </button>
-            <div className="avatar" aria-label={`${firstName || "Museboard"} profile`}>
-              {avatarInitial}
-            </div>
+            <button
+              className="avatar avatar-button"
+              onClick={() => setActiveView("Settings")}
+              aria-label="Open settings"
+              type="button"
+            >
+              {profile?.avatarUrl ? (
+                <span
+                  className="avatar-photo"
+                  style={{ backgroundImage: `url(${profile.avatarUrl})` }}
+                />
+              ) : (
+                avatarInitial
+              )}
+            </button>
           </div>
         </header>
         <form className="capture-form" onSubmit={addTask}>
@@ -412,6 +466,83 @@ export default function Home() {
                 );
               })}
             </div>
+          </section>
+        )}
+        {activeView === "Settings" && (
+          <section className="settings-section" aria-labelledby="settings-title">
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">Settings</span>
+                <h2 id="settings-title">Make this space yours</h2>
+              </div>
+            </div>
+            <p className="section-intro">Your profile and tasks belong only to this browser.</p>
+            <form className="settings-form" onSubmit={saveProfile}>
+              <section className="settings-block">
+                <div>
+                  <span className="section-kicker">Profile</span>
+                  <h3>Your name and picture</h3>
+                </div>
+                <div className="profile-editor">
+                  <div className="profile-preview" aria-label="Current profile photo">
+                    {profile?.avatarUrl ? (
+                      <span
+                        className="profile-photo"
+                        style={{ backgroundImage: `url(${profile.avatarUrl})` }}
+                      />
+                    ) : (
+                      avatarInitial
+                    )}
+                  </div>
+                  <div className="photo-controls">
+                    <label className="photo-button" htmlFor="profile-photo">
+                      Choose photo
+                    </label>
+                    <input
+                      accept="image/*"
+                      className="sr-only"
+                      id="profile-photo"
+                      onChange={changeProfilePhoto}
+                      type="file"
+                    />
+                    {profile?.avatarUrl && (
+                      <button
+                        className="text-button danger"
+                        onClick={removeProfilePhoto}
+                        type="button"
+                      >
+                        Remove photo
+                      </button>
+                    )}
+                    <p>Image files under 1 MB stay on this device.</p>
+                  </div>
+                </div>
+                <label className="settings-label" htmlFor="profile-name">
+                  Display name
+                </label>
+                <input
+                  className="settings-input"
+                  id="profile-name"
+                  maxLength={40}
+                  onChange={(event) => setProfileNameDraft(event.target.value)}
+                  value={profileNameDraft}
+                />
+                <div className="settings-actions">
+                  <span aria-live="polite">{profileMessage}</span>
+                  <button className="save-button" type="submit">
+                    Save changes
+                  </button>
+                </div>
+              </section>
+              <section className="settings-block data-note">
+                <span className="section-kicker">Storage</span>
+                <h3>Private by design</h3>
+                <p>
+                  Museboard does not create an account or send your tasks, notes, name, or photo to
+                  a server.
+                </p>
+              </section>
+            </form>
           </section>
         )}
       </section>
