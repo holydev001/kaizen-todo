@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, Check, Menu, Moon, Sun, Waves, X } from "lucide-react";
 
 type TaskCategory = "Today" | "This week" | "Someday";
 type Filter = "all" | "priority" | "open" | "done";
@@ -294,7 +295,7 @@ export default function Home() {
           aria-label={task.done ? `Mark ${task.title} incomplete` : `Mark ${task.title} complete`}
           type="button"
         >
-          {task.done ? "✓" : ""}
+          {task.done && <Check aria-hidden="true" size={13} strokeWidth={3} />}
         </button>
         <div className="task-copy">
           <h3>{task.title}</h3>
@@ -304,7 +305,7 @@ export default function Home() {
           </div>
         </div>
         <button className="detail-button" onClick={() => openTask(task)} type="button">
-          Open <span aria-hidden="true">↗</span>
+          Open <ArrowUpRight aria-hidden="true" size={13} />
         </button>
       </article>
     );
@@ -312,7 +313,7 @@ export default function Home() {
   function renderEmpty(message: string) {
     return (
       <div className="empty-state">
-        <span>⌁</span>
+        <Waves aria-hidden="true" size={28} />
         <p>{message}</p>
       </div>
     );
@@ -374,7 +375,11 @@ export default function Home() {
               aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
               type="button"
             >
-              {mobileNavOpen ? "×" : "☰"}
+              {mobileNavOpen ? (
+                <X aria-hidden="true" size={19} />
+              ) : (
+                <Menu aria-hidden="true" size={19} />
+              )}
             </button>
             <button
               className="icon-button"
@@ -382,7 +387,7 @@ export default function Home() {
               aria-label="Toggle theme"
               type="button"
             >
-              {dark ? "☼" : "☾"}
+              {dark ? <Sun aria-hidden="true" size={17} /> : <Moon aria-hidden="true" size={17} />}
             </button>
             <button
               className="avatar avatar-button"
@@ -426,7 +431,7 @@ export default function Home() {
                 ))}
               </select>
               <button type="submit">
-                Add task <span aria-hidden="true">↗</span>
+                Add task <ArrowUpRight aria-hidden="true" size={15} />
               </button>
             </form>
             <div className="filter-bar" aria-label="Filter tasks">
@@ -537,7 +542,7 @@ export default function Home() {
                     </div>
                     <p>{doneCount} complete</p>
                     <button onClick={() => setActiveView("Planner")} type="button">
-                      View list <span aria-hidden="true">↗</span>
+                      View list <ArrowUpRight aria-hidden="true" size={13} />
                     </button>
                   </section>
                 );
@@ -617,7 +622,7 @@ export default function Home() {
                   onClick={() => setDark((current) => !current)}
                   type="button"
                 >
-                  Switch to {dark ? "light" : "dark"} <span aria-hidden="true">↗</span>
+                  Switch to {dark ? "light" : "dark"} <ArrowUpRight aria-hidden="true" size={13} />
                 </button>
               </section>
             </form>
@@ -635,7 +640,7 @@ export default function Home() {
             <div className="focus-session-header">
               <span className="section-kicker">A quiet 25-minute session</span>
               <button className="close-button" onClick={closeFocusSession} type="button">
-                End session ×
+                End session <X aria-hidden="true" size={13} />
               </button>
             </div>
             <p className="focus-task-label">Your focus is</p>
@@ -688,7 +693,7 @@ export default function Home() {
                 type="button"
                 aria-label="Close task detail"
               >
-                Close ×
+                Close <X aria-hidden="true" size={13} />
               </button>
             </header>
             {isEditingTitle ? (
@@ -835,7 +840,7 @@ export default function Home() {
                   value={nameDraft}
                 />
                 <button className="onboarding-button" type="submit">
-                  Begin gently <span>↗</span>
+                  Begin gently <ArrowUpRight aria-hidden="true" size={14} />
                 </button>
               </form>
             ) : (
@@ -858,7 +863,8 @@ export default function Home() {
                     Skip tour
                   </button>
                   <button className="onboarding-button" onClick={advanceOnboarding} type="button">
-                    {onboardingStep === tourSteps.length ? "Open my space" : "Next"} <span>↗</span>
+                    {onboardingStep === tourSteps.length ? "Open my space" : "Next"}{" "}
+                    <ArrowUpRight aria-hidden="true" size={14} />
                   </button>
                 </div>
               </div>
