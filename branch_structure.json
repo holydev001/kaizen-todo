@@ -1,0 +1,39 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "chore/readme",
+    "feat/app-validation-and-polish",
+    "feat/creative-todo-foundation",
+    "feat/creative-todo-tools",
+    "feat/deployment-readiness",
+    "feat/profile-settings",
+    "feat/workspace-dashboard",
+    "fix/navigation-settings",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "chore/readme": "main",
+    "feat/app-validation-and-polish": "main",
+    "feat/creative-todo-foundation": "main",
+    "feat/creative-todo-tools": "main",
+    "feat/deployment-readiness": "main",
+    "feat/profile-settings": "main",
+    "feat/workspace-dashboard": "main",
+    "fix/navigation-settings": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "chore/readme",
+    "feat/app-validation-and-polish",
+    "feat/creative-todo-foundation",
+    "feat/creative-todo-tools",
+    "feat/deployment-readiness",
+    "feat/profile-settings",
+    "feat/workspace-dashboard",
+    "fix/navigation-settings",
+    "origin"
+  ]
+}
